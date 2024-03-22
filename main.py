@@ -34,24 +34,44 @@ def general_handler(message):
 def youtube_handler(message):
     text = message.text
     chat_id = message.chat.id
-    
-
     content_regex = re.match(YOUTUBE_LINK_REGEX, text)
+
     if content_regex:
+
         bot_core_lib.handle_user_dir_creation(str(chat_id))
         yt_link_group = content_regex.group(2)
+
         if yt_link_group:
+
             yt_link = content_regex.group(2)
+
             #bot.send_message(chat_id, f"found yt link: `{yt_link}`")
             video_info = bot_func_youtube.get_video_info(yt_link)
             video_info_formatted = "\n".join(f"{key}: {val}" for key, val in video_info.items())
-            bot.send_message(chat_id, video_info_formatted)
-            download_path = f"usrstorage/{chat_id}/" 
-            downloaded_file_path = bot_func_youtube.download_from_yt(yt_link, download_path)
-            
+
+            bot.send_message(
+                chat_id, 
+                video_info_formatted
+            )
+
+            download_path = f"usrstorage/{chat_id}/"
+            temporary_downloading_message_id = bot.send_message(
+                chat_id, 
+                "Downloading..."
+            ).message_id
+
+            downloaded_file_path = bot_func_youtube.download_from_yt(
+                yt_link, 
+                download_path
+            )
+
             bot.send_video(chat_id, InputFile(downloaded_file_path))
+            bot.delete_message(chat_id, temporary_downloading_message_id)
+
             return 0
+
         yt_search_query = content_regex.group(3)
+
         if yt_search_query:
             bot.send_message(chat_id, f"found search query: `{yt_search_query}`")
             return 0
