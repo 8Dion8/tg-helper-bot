@@ -1,4 +1,5 @@
 import telebot as tb
+from telebot.types import InputFile
 from dotenv import dotenv_values
 import re
 
@@ -12,6 +13,7 @@ AUTHOR_TG_ID = config["AUTHOR_TG_ID"]
 
 
 bot = tb.TeleBot(TOKEN, parse_mode="MARKDOWN")
+
 
 bot.send_message(AUTHOR_TG_ID, "Bot online.")
 
@@ -27,11 +29,14 @@ def youtube_handler(message):
         yt_link_group = content_regex.group(3)
         if yt_link_group:
             yt_link = content_regex.group(2)
-            bot.send_message(chat_id, f"found yt link: `{yt_link}`")
+            #bot.send_message(chat_id, f"found yt link: `{yt_link}`")
             video_info = bot_func_youtube.get_video_info(yt_link)
             video_info_formatted = "\n".join(f"{key}: {val}" for key, val in video_info.items())
             bot.send_message(chat_id, video_info_formatted)
-
+            download_path = f"usrstorage/{chat_id}/" 
+            downloaded_file_path = bot_func_youtube.download_from_yt(yt_link, download_path)
+            
+            bot.send_video(chat_id, InputFile(downloaded_file_path))
             return 0
         yt_search_query = content_regex.group(4)
         if yt_search_query:
