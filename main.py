@@ -2,6 +2,7 @@ import telebot as tb
 from dotenv import dotenv_values
 import re
 
+import func.core as bot_core_lib
 import func.youtube as bot_func_youtube
 
 config = dotenv_values(".env")
@@ -22,9 +23,15 @@ def youtube_handler(message):
     content_regex = re.search(r"(\/youtube|\/y)\s(.*(www\.youtube\.com\/.+|youtu\.be\/.+)|(.+))", text)
 
     if content_regex:
-        yt_link = content_regex.group(3)
-        if yt_link:
+        bot_core_lib.handle_user_dir_creation(str(chat_id))
+        yt_link_group = content_regex.group(3)
+        if yt_link_group:
+            yt_link = content_regex.group(2)
             bot.send_message(chat_id, f"found yt link: `{yt_link}`")
+            video_info = bot_func_youtube.get_video_info(yt_link)
+            video_info_formatted = "\n".join(f"{key}: {val}" for key, val in video_info.items())
+            bot.send_message(chat_id, video_info_formatted)
+
             return 0
         yt_search_query = content_regex.group(4)
         if yt_search_query:
@@ -35,7 +42,6 @@ def youtube_handler(message):
 
 
 
-    bot.send_message(chat_id, text)
 
 
 bot.infinity_polling()
