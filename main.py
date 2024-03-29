@@ -4,7 +4,7 @@ from dotenv import dotenv_values
 import re
 
 import func.core as bot_core_lib
-import func.youtube as bot_func_youtube
+from func.youtube import YTHandler
 
 config = dotenv_values(".env")
 TOKEN = config["TOKEN"]
@@ -14,7 +14,8 @@ YOUTUBE_LINK_REGEX = r"(.*(www\.youtube\.com\/.+|youtu\.be\/.+)|(.+))"
 
 
 
-bot = tb.TeleBot(TOKEN, parse_mode="MARKDOWN")
+bot = tb.TeleBot(TOKEN) 
+ythandler = YTHandler(bot)
 
 
 bot.send_message(AUTHOR_TG_ID, "Bot online.")
@@ -46,7 +47,7 @@ def youtube_handler(message):
             yt_link = content_regex.group(2)
 
             #bot.send_message(chat_id, f"found yt link: `{yt_link}`")
-            video_info = bot_func_youtube.get_video_info(yt_link)
+            video_info = ythandler.get_video_info(yt_link)
             video_info_formatted = "\n".join(f"{key}: {val}" for key, val in video_info.items())
 
             bot.send_message(
@@ -55,18 +56,20 @@ def youtube_handler(message):
             )
 
             download_path = f"usrstorage/{chat_id}/"
-            temporary_downloading_message_id = bot.send_message(
+            tdmid = bot.send_message(
                 chat_id, 
-                "Downloading..."
+                "Downloading: 0%"
             ).message_id
 
-            downloaded_file_path = bot_func_youtube.download_from_yt(
+            downloaded_file_path = ythandler.download_from_yt(
                 yt_link, 
-                download_path
+                download_path,
+                chat_id,
+                tdmid
             )
 
             bot.send_video(chat_id, InputFile(downloaded_file_path))
-            bot.delete_message(chat_id, temporary_downloading_message_id)
+            bot.delete_message(chat_id, tdmid)
 
             return 0
 
